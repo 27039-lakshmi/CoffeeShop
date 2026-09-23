@@ -9,6 +9,7 @@ namespace CoffeeShop.Presentation.View
     public class AuthenticationView
     {
         private UserService userService;
+        private DashboardView dashboardView = new();
 
         public AuthenticationView(UserService userService)
         {
@@ -63,6 +64,7 @@ namespace CoffeeShop.Presentation.View
             }
             this.userService.AddUser(new User(username, password, name));
             Console.WriteLine("User Added successfully");
+            ClearScreen();
         }
 
         private string? GetNameInput()
@@ -81,37 +83,33 @@ namespace CoffeeShop.Presentation.View
         private string GetPasswordInput()
         {
             Console.WriteLine("Enter password");
-            var password = new StringBuilder(); 
+            var password = new StringBuilder();
             while (true)
             {
                 ConsoleKeyInfo key = Console.ReadKey(true);
                 if (key.Key == ConsoleKey.Enter) break;
-                if(key.Key == ConsoleKey.Backspace && password.Length > 0)
+                if (key.Key == ConsoleKey.Backspace && password.Length > 0)
                 {
                     password.Remove(password.Length - 1, 1);
                     Console.Write("\b \b");
                 }
-                else if(!char.IsControl(key.KeyChar))
+                else if (!char.IsControl(key.KeyChar))
                 {
                     password.Append(key.KeyChar);
                     Console.Write("*");
                 }
             }
             Console.WriteLine();
-            return HashPassword(password.ToString());
+            return this.userService.HashPassword(password.ToString());
         }
 
-        private string HashPassword(string password)
-        {
-            byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(hashBytes);
-        }
+        
         private string? GetUsernameInput()
         {
             Console.WriteLine("Enter username");
             string username = Console.ReadLine() ?? string.Empty;
             string? failureResult = null;
-            if(!Validator.IsValidUsername(username))
+            if (!Validator.IsValidUsername(username))
             {
                 Console.WriteLine("Username should not contain spaces");
                 return failureResult;
@@ -132,13 +130,22 @@ namespace CoffeeShop.Presentation.View
                 return;
             }
             string password = GetPasswordInput();
-            string hashedPassword = HashPassword(password);
-            if(this.userService.AuthenticateUser(username, hashedPassword))
+            if (!this.userService.AuthenticateUser(username, password))
             {
                 Console.WriteLine("Password incorrect");
                 return;
             }
-            Console.WriteLine("Loggeed");
+            Console.WriteLine("Logged In successfully");
+            ClearScreen();
+            var user = this.userService.GetUserByUsername(username);
+            dashboardView.DisplayDashboard(user);
+        }
+
+        private void ClearScreen()
+        {
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+            Console.Clear();
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using CoffeeShop.Infrastructure.Repository;
-using CoffeeShop.Domain.Entities;
+﻿using CoffeeShop.Domain.Entities;
+using CoffeeShop.Infrastructure.Repository;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace CoffeeShop.Application.Services
 {
@@ -16,7 +18,7 @@ namespace CoffeeShop.Application.Services
         {
             this.userRepo.AddUser(user);
         }
-
+            
         public User? GetUserByUsername(string username)
         {
             return this.userRepo.GetUserByUsername(username);
@@ -32,6 +34,12 @@ namespace CoffeeShop.Application.Services
         {
             var user = this.GetUserByUsername(username);
             return user != null && user.Password == password;
+        }
+
+        public string HashPassword(string password)
+        {
+            byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+            return Convert.ToHexString(hashBytes);
         }
     }
 }
